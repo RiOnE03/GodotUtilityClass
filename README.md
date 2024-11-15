@@ -1,2 +1,2 @@
 # GodotUtilityClass
- 
+Hey Guys! Ever tired of defining your custom functions just to tackle one problem that persists between different scripts. So you have to keep on copying those functions from script to script just so that one problem can be solved. Ever wished only if Godot had an inbuilt function to solve it. Well you don't have to worry anymore. Godot Utility class comes with some functions and classes made to tackle such problems.   
