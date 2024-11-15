@@ -10,20 +10,20 @@ Nothing to worring! Just add Utility script into your own project and save it. A
 # Some of the inbuilt functions and classes:
 * polar -> it takes a bool and convert false into -1 and true into 1. What might be the test case?You won't need to create a function just to find the sprite's facing direction from its flip_h
   Example: `Utility.polar(flip_h)`
-* AllowOnce -> Ever wanted your function to ignore all other calls while the current function is under process or awaiting a signal?*
+* AllowOnce -> Ever wanted your function to ignore all other calls while the current function is under process or awaiting a signal?  
   Example: `var AO: Utility.AllowOnce = Utility.AllowOnce.new()`  
             `if AO.allow_once():`  
-              `await end_signal`  
-              `AO.reset()`
-* AllowNTimes -> Just like Allow once but only allow first N functions to work until reset.
-  Example: `var AN: Utility.AllowNTimes = Utility.AllowNTimes.new(10)\n
-           func _process():\n
-             \t if AN.allow_n_times():\n
-                \t\t #task\n`
-* flip -> Want to replicate the functionality of a switch? On, off, on, off, on, off. It alternates between true and false every time its called.
-Example: `var fl: Utility.flip = Utility.flip.new()\n
-          \t func _button_pressed():\n
-             \t \t if fl.flip():\n
-                # \t\t\t On\n
-             \t\t else:\n
-                \t\t\t #off\n`
+              `  await end_signal`  
+              `  AO.reset()`
+* AllowNTimes -> Just like Allow once but only allow first N functions to work until reset.  
+  Example: `var AN: Utility.AllowNTimes = Utility.AllowNTimes.new(10)`    
+           `func _process():`  
+           `  if AN.allow_n_times():`  
+           `    #task\n`  
+* flip -> Want to replicate the functionality of a switch? On, off, on, off, on, off. It alternates between true and false every time its called.  
+Example: `var fl: Utility.flip = Utility.flip.new()`  
+          `func _button_pressed():`  
+          `  if fl.flip():`  
+          `    On`  
+          `  else:`  
+          `    #off`
