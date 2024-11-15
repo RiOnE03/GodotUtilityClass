@@ -25,7 +25,7 @@ Nothing to worring! Just add Utility script into your own project and save it. A
   var AN: Utility.AllowNTimes = Utility.AllowNTimes.new(10)    
   func _process():
      if AN.allow_n_times():  
-        #task\n
+        #task
   ``` 
 * flip -> Want to replicate the functionality of a switch? On, off, on, off, on, off. It alternates between true and false every time its called.  
   Example:
