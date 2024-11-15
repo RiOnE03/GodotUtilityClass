@@ -12,10 +12,7 @@ Nothing to worring! Just add Utility script into your own project and save it. A
   Example: `Utility.polar(flip_h)`
 * AllowOnce -> Ever wanted your function to ignore all other calls while the current function is under process or awaiting a signal?  
   Example:
-  `var AO: Utility.AllowOnce = Utility.AllowOnce.new()   
-  if AO.allow_once():  
-    await end_signal
-    AO.reset()`
+  ```var AO: Utility.AllowOnce = Utility.AllowOnce.new()\n if AO.allow_once():\n\t await end_signal \n \t AO.reset()```
 * AllowNTimes -> Just like Allow once but only allow first N functions to work until reset.  
   Example: `var AN: Utility.AllowNTimes = Utility.AllowNTimes.new(10)`    
            `func _process():`  
