@@ -13,6 +13,17 @@ static func polar(boolean: bool, reverse: bool = false)->int:
 		result = -1
 	return -result if reverse else result
 
+## Creates a timer that can be directly added instead of defining its paramters first in multiple lines
+static func generate_timer(duration: int = 1, link: Callable = Callable(), autostart: bool = false, one_shot:bool = true)->Timer:
+	var timer: Timer = Timer.new()
+	timer.process_callback = Timer.TIMER_PROCESS_PHYSICS
+	timer.wait_time = duration
+	timer.autostart = autostart
+	timer.one_shot = one_shot
+	if link.is_valid():
+		timer.timeout.connect(link)
+	return timer
+
 
 ## This class can be used to create an alternative bool every time the function flip will be
 ## used it will provide alternate result between true and false. It can be used to create functions 
