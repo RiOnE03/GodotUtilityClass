@@ -9,7 +9,7 @@ class_name Utility extends Object
 #
 #
 # 1. polar:
-#       Detail: This function return 1 if true else -1 however the result is flipped if reverse is true.
+#       Detail: This function return 1 if true else -1, however the result is flipped if reverse is true.
 #               This function is useful for cases like when you want to find the direction where the sprite
 #               is facing using its flip_h
 # 2. generate_timer:
@@ -23,9 +23,9 @@ class_name Utility extends Object
 #    if there is (N), then that variable should neither be set nor used to read directly
 #
 # 1. flip:
-#       Detail: This class can be used to create an alternative bool every time the function flip will be
-#               used it will provide alternate result between true and false. It can be used to create functions 
-#               related to swtiching like light on and off
+#       Detail: This class can be used to create a bool that alternates every time the function flip is called.
+#               It will alternate between true and false every call. It can be used to create functions related 
+#               to swtiching like light on and off
 #       Example: func pressed()->void:
 #                   if flip.flip():
 #                      turn_on()
@@ -37,8 +37,8 @@ class_name Utility extends Object
 #                    new(): can pass bool in new() to decide what state the flip starts with
 #                    flip(): Should be called to use the main functionality
 # 2. AllowOnce:
-#       Detail: This function is return true only the first time do_once is called and return false every
-#               other time until reset is called, new(false) can be set to make it start in deactivated state
+#       Detail: This function will return true only the first time do_once is called and return false every
+#               other time until reset is called. new(false) can be set to make it start in deactivated state
 #               Another use case could be when you want to ignore any other call to your function until the 
 #               current task is completed finishing
 #       Example: func my_function():
@@ -67,7 +67,7 @@ class_name Utility extends Object
 # 4. NTween:
 #       Detail: Ever struggled with tween? I know I know... me too. Well I hope this helps..........
 #       Example: func pressed():
-#                  if !tween.is_running:
+#                  if tween.is_ready:
 #                     tween.tween().tween_property(...)
 #               Variables:
 #                (N) owner: Do not try to read it, there is not use for that. Setting it is aslso not recommended but can set it if want to change the node tween binds to. 
