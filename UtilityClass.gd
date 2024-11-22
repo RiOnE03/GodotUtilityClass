@@ -75,10 +75,16 @@ class_name Utility extends Object
 #               Signals:
 #                    finished: Triggers every time a tween has finished all its tween.
 #                    loop_finished: Only works when set_loop is used. It will trigger at the end of each loop except the last which will be emitted but previous finished signal.
-#               functions:
+#               functions:   Note: Only use the gets that are provided by the class itself. Don't use any getter functions using tween() otherwise it might crash or thorugh errors. 
 #                    new(): The only argument is a node reference which generally should be "self". However can change it to show the node that the tween will always bind to.
 #                    tween(): This is the tween you should be using. A bit hactic but for now this is the way.
-#                    is_running(): Do not use the original tween's is_running, use this instead it will through errors.    
+#                    is_stopped(): Returns true only if the tween was once running and was stopped otherwise always return false
+#                    is_ready(): Return true if the tween hasn't been used yet and is ready to be used.
+#                    is_running(): Return true if the tween is under processing and already is performing a tween. Make sure to not add any tweener calls if the tween is already 
+#                                  running always check before adding new tween calls. 
+#                    get_loops_left(): Returns the number of loops left if the set_loop was fed value. Return -1 if infinite loops and 0 if no loop was set.
+#                    get_total_time_elapsed(): Returns the time elapsed since the tween started and returns 0 if the tween is in ready state.
+#                    kill(): If a tween is running it will kill it and set to ready state otherwise won't do anything.
 # /******************************************
 
 
@@ -170,7 +176,29 @@ class NTween extends RefCounted:
 			tw = owner.create_tween()
 			tw.finished.connect(func(): finished.emit())
 			tw.loop_finished.connect(func(count): loop_finished.emit(count))
-			return tw      
+			return tw
+	
+	func is_stopped()->bool:
+		return tw and tw.is_valid() and !tw.is_running()
+	
+	func is_ready():
+		return !(tw and tw.is_valid())
+	
 	func is_running()->bool:
 		return tw.is_running() if tw and tw.is_valid() else false
 	
+	func get_loops_left()->int:
+		if tw and tw.is_valid():
+			return tw.get_loops_left()
+		else:
+			return 0
+	
+	func get_total_time_elapsed()->float:
+		if tw and tw.is_valid():
+			return tw.get_total_elapsed_time()
+		else:
+			return 0
+
+	func kill()->void:
+		if tw and tw.is_valid():
+			tw.kill()
