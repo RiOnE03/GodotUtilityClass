@@ -67,7 +67,7 @@ class_name Utility extends Object
 # 4. NTween:
 #       Detail: Ever struggled with tween? I know I know... me too. Well I hope this helps..........
 #       Example: func pressed():
-#                  if tween.is_ready:
+#                  if tween.is_ready():
 #                     tween.tween().tween_property(...)
 #               Variables:
 #                (N) owner: Do not try to read it, there is not use for that. Setting it is aslso not recommended but can set it if want to change the node tween binds to. 
