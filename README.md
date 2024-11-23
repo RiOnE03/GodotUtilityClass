@@ -11,6 +11,9 @@ Nothing to worring! Just add Utility script into your own project and save it. A
 * polar -> it takes a bool and convert false into -1 and true into 1. What might be the test case? You won't need to create a function just to find the sprite's facing direction from its flip_h  
   Example:  
   `Utility.polar(flip_h)`
+* mirror -> Completed half of your mesh? Wanna mirror the rest? Here..... (Only works with 2D for now)  
+  Example:  
+  `Utility.mirror(root_node)`
 * AllowOnce -> Ever wanted your function to ignore all other calls while the current function is under process or awaiting a signal?  
   Example:
   ```
