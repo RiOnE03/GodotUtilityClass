@@ -1,7 +1,7 @@
 class_name Utility extends Object
 
 
-# /******************************************
+# /******************************************************************************************************************************
 # Description:
 #
 #
@@ -15,8 +15,53 @@ class_name Utility extends Object
 # 2. generate_timer:
 #       Detail: Creates a timer that can be directly added instead of defining its paramters first in multiple lines
 #
-#
-#
+# 3. mirror: Currently only works for 2d scene but will be updated in the future. 
+#       Detail: This function can be called to invidually create a mirror for your already pleaced nodes. Like in those artist
+#               tool where you need to draw half part of your mesh and it immediately copies the same mirror it and paste it on 
+#               the other side. Recommended to be used with tool script only for now. It will mirror all the children of the node
+#               you pass it as an argument, create a mirror version of them and add it to the same node.
+#       Example: @tool
+#                extends Node
+#                @export var root: Node2D
+#                @export var invert: bool = false:
+#                    set(value):
+#                       invert = value
+#                       if invert and is_instance_valid(root):
+#                          Utility.mirror(root)
+#/******************************************************************************************************************************
+
+
+
+static func polar(boolean: bool, reverse: bool = false)->int:
+	var result: int = 1 if boolean else -1
+	return -result if reverse else result
+
+
+static func generate_timer(duration: int = 1, link: Callable = Callable(), autostart: bool = false, one_shot:bool = true, process_callback:int = Timer.TIMER_PROCESS_PHYSICS)->Timer:
+	var timer: Timer = Timer.new()
+	timer.process_callback = process_callback
+	timer.wait_time = duration
+	timer.autostart = autostart
+	timer.one_shot = one_shot
+	if link.is_valid():
+		timer.timeout.connect(link)
+	return timer
+
+static func mirror(parent:Node2D,child: Node2D = null)->void:
+	if !is_instance_valid(child):
+		child = parent.duplicate()
+		parent.add_child(child)
+		child.owner = parent.owner
+	child.position.y = -child.position.y
+	if child is Sprite2D:
+		var d: Sprite2D = child
+		d.flip_v = !d.flip_v
+	for grand_child in child.get_children():
+		grand_child.owner = parent.owner
+		mirror(child,grand_child)
+
+
+
 #~~~~~~~~~~~~~~~~~~~Classes (needs to create an instance before using)~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 #    If there is (!) in front of any variable that function should not be set directly and 
@@ -86,28 +131,6 @@ class_name Utility extends Object
 #                    get_total_time_elapsed(): Returns the time elapsed since the tween started and returns 0 if the tween is in ready state.
 #                    kill(): If a tween is running it will kill it and set to ready state otherwise won't do anything.
 # /******************************************
-
-
-
-
-static func polar(boolean: bool, reverse: bool = false)->int:
-	var result: int = 0
-	if boolean:
-		result = 1
-	else:
-		result = -1
-	return -result if reverse else result
-
-
-static func generate_timer(duration: int = 1, link: Callable = Callable(), autostart: bool = false, one_shot:bool = true)->Timer:
-	var timer: Timer = Timer.new()
-	timer.process_callback = Timer.TIMER_PROCESS_PHYSICS
-	timer.wait_time = duration
-	timer.autostart = autostart
-	timer.one_shot = one_shot
-	if link.is_valid():
-		timer.timeout.connect(link)
-	return timer
 
 
 
