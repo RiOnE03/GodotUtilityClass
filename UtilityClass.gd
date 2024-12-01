@@ -56,6 +56,14 @@ static func mirror(parent:Node2D,child: Node2D = null)->void:
 	if child is Sprite2D:
 		var d: Sprite2D = child
 		d.flip_v = !d.flip_v
+	if child is Polygon2D:
+		var d: Polygon2D = child
+		d.skeleton = ""
+		d.texture_scale.y *=-1
+		for i in d.polygon.size():
+			d.polygon[i].y *=-1
+		for i in d.uv.size():
+			d.uv[i].y *=-1
 	for grand_child in child.get_children():
 		grand_child.owner = parent.owner
 		mirror(child,grand_child)
