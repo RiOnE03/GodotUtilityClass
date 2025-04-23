@@ -2,20 +2,9 @@
 class_name Utility extends Object
 
 
-# /******************************************************************************************************************************
-# Description:
-#
-#
-#~~~~~~~~~~~~~~~~~~Static functions (Can be called and used directly)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#
-#
-# 1. polar:
-#       Detail: 
-# 2. generate_timer:
-#       Detail: 
-#
-# 3. mirror: 
-#/******************************************************************************************************************************
+
+
+
 
 
 ## This function return 1 if true else -1, however the result is flipped if reverse is true.
@@ -24,6 +13,14 @@ class_name Utility extends Object
 static func polar(boolean: bool, reverse: bool = false)->int:
 	var result: int = 1 if boolean else -1
 	return -result if reverse else result
+
+
+
+
+
+
+
+
 
 ## Creates a timer that can be directly added instead of defining its paramters first in multiple lines
 static func generate_timer(duration: int = 1, link: Callable = Callable(), autostart: bool = false, one_shot:bool = true, process_callback:int = Timer.TIMER_PROCESS_PHYSICS)->Timer:
@@ -35,6 +32,13 @@ static func generate_timer(duration: int = 1, link: Callable = Callable(), autos
 	if link.is_valid():
 		timer.timeout.connect(link)
 	return timer
+
+
+
+
+
+
+
 
 ##Currently only works for 2d scene but will be updated in the future.
 ##This function can be called to invidually create a mirror for your already pleaced nodes. Like in those artist
@@ -71,7 +75,191 @@ static func mirror(parent:Node2D,child: Node2D = null)->void:
 		mirror(child,grand_child)
 
 
+static var active_delays: Dictionary[Array,SceneTreeTimer] ## Variable internally maintained by delay. Not to be altered from outside.
+
+## Delay function created to have a different affect than await. Delay unlike doesn't hold all the execution lines but instead rejects all the execution calls
+## when its already running. So unlike await that stops all the exection to the same function and then sends them all out when the timer runs out. It will only keep one
+## execution. Each delay call will be unique as long as the token provided is different which currently is defined by the callable. [br][br]
+## [param node] : Node reference is needed to be passed with the call to give access to the scene tree since static functions don't have direct access to them.
+## You could create this class as an autoload and then extend the script from Node and use [code]get_tree().create_timer()[/code] directly to avoid passing in the node parameter.[br] [br]
+## [param token] : Fell the function/callable which called Delay. Delay is used as token that associate a specific delay to that specific function. Which later is
+## used for identification for repeated calls and rejecting them when delay is running. [br] [br]
+## [param duration] : Its the duration for which the delay will stay active for before releasing the execution line. [br] [br]
+## [param reset] : Reset bool defines whether the next call to the same delay will just get ignored while its active or it will reset the timer to the new duration. In both cases the progressive execution will be rejected. [br] [br]
+## [param sub_token] : Sub token are used when you want to use more than one delay within the same function and all of them should be treated as different delays instead of being
+## treated a two instances of the same delay. For each different delay give it different integer. Same values sub token will be make the delay be treated as the same delay. Sub token
+## only takes effect if the token is same. Using sub token in different function or facing different token values most make any difference. [br] [br]
+## Write the delay line as follows otherwise it won't work as intended.[br] 
+## [codeblock] 
+## if await Utility.Delay(node,caller,1.0): return 
+## [/codeblock] 
+static func Delay(node: Node, token: Callable, duration: float =1.0, reset: bool = false, sub_token: int = 0)->bool:
+	if !active_delays.has([token, sub_token]):
+		var scene_timer: SceneTreeTimer = node.get_tree().create_timer(duration)
+		active_delays[[token,sub_token]] = scene_timer
+		await scene_timer.timeout
+		active_delays.erase([token,sub_token])
+		return false
+	elif reset:
+		var timer: SceneTreeTimer = active_delays[[token,sub_token]]
+		timer.time_left = duration
+	return true
+
+
+
+## Why use this raycast when you have raycast node? Because of situations. The raycast node is better when raycast is done
+## multiple times with respect to a certain node's position and has unchanging properties like a gun fire. Always starts from
+## the same muzzle and scans till a certain distance in a fixed direction to the front of the muzzle. Also has properties like collsion mask. collide with area/bodies
+## pre defined and not changing much. This raycast is better where raycast is always inconsistent and is not always relevent to the caster node like detecting
+## if the player is in view or not. The end position is depending on player and is not always going in the same direction from originating from the same node's position. [br] [br]
+## [param verifier] : Feed [code]self[/code]. To verify that the raycast is used in the 2D world space, also used for internal use. [br] [br]
+## [param start] : The start position of ray cast in global position. [br] [br]
+## [param end] : The end position of ray cast in global position. [br] [br]
+## [param detect_bodies], [param detect_areas] : To declare whether the raycast can detect bodies and areas or not.[br] [br]
+## [param collision_mask] : The collision mask of the raycast to decide which collisionobjects can be detected. [br] [br]
+## [param ignore] : An array of CollisionBodies to ignore while detecting. [br] [br]
+## [param hit_from_inside] : A boolean that decides if the start point is inside a body can it collide from inside it. Does not affect concave polygon shapes. [br] [br]
+## The description for result can be founded in [method PhysicsDirectSpaceState2D.intersect_ray].
+static func raycast2D(
+		verifier: Node2D,
+		start: Vector2,
+		end: Vector2,
+		detect_bodies: bool = true,
+		detect_areas: bool = false,
+		collision_mask: int = 1,
+		ignore: Array[RID] = [],
+		hit_from_inside: bool = false
+		)->Dictionary:
+	if !is_instance_valid(verifier): return {}
+	var space:PhysicsDirectSpaceState2D = verifier.get_world_2d().direct_space_state
+	var query:PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(start,end,collision_mask,ignore)
+	query.collide_with_bodies = detect_bodies
+	query.collide_with_areas = detect_areas
+	query.hit_from_inside = hit_from_inside
+	var result:Dictionary = space.intersect_ray(query)
+	return result
  
+
+
+
+## Why use this shapecast when the node is available? Read [method raycast2D] [br] [br]
+## [param verifier] : Feed [code]self[/code]. To verify that the shapecast is used in the 2D world space, also used for internal use. [br] [br]
+## [param shape] : The shape that will be used for the shapecast. For how different shapes may look or way. You can try checking how shapecast node looks on the viewport. [br] [br]
+## [param start] : The start position of shape cast in global position. [br] [br]
+## [param end] : The end position of shape cast in global position. [br] [br]
+## [param max_detections] : Defines the max numbers of colliders it can detect per use. By default its 1, meaning only 1 collider will be detected. Use lower values are more performance. [br] [br]
+## [param detect_bodies], [param detect_areas] : To declare whether the raycast can detect bodies and areas or not.[br] [br]
+## [param collision_mask] : The collision mask of the raycast to decide which collisionobjects can be detected. [br] [br]
+## [param ignore] : An array of CollisionBodies to ignore while detecting. [br] [br]
+## [param rotation], [param scale] : Defines the rotation(in degrees) and scale of the shape. [br] [br]
+## [param safety_margin] : A safety margin used around the border of the shape. Lower value means more precision i.e results will have more accurate values
+## whereas higher values means more consistancy i.e. even if the results values might not be accurate but there are more chances that a detection will be missed which
+## can happen due to many factors like high movement speed, floating point calculation etc. [br] [br]
+## The description for result can be founded in [method PhysicsDirectSpaceState2D.intersect_shape].
+static func shapecast2D(
+		verifier: Node2D,
+		shape:Shape2D,
+		start: Vector2,
+		end: Vector2,
+		max_detections: int = 1,
+		detect_bodies: bool = true,
+		detect_areas: bool = false,
+		collision_mask: int = 1,
+		ignore: Array[RID] = [],
+		rotation: float = 0.0,
+		scale : Vector2 = Vector2(1.0,1.0),
+		safety_margin: float = 0.0,
+		)->Array[Dictionary]:
+	
+	if !is_instance_valid(verifier): return []
+	var space:PhysicsDirectSpaceState2D = verifier.get_world_2d().direct_space_state
+	var query:PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.new()
+	query.shape = shape
+	query.collide_with_areas = detect_areas
+	query.collide_with_bodies = detect_bodies
+	query.collision_mask = collision_mask
+	query.exclude = ignore
+	query.margin = safety_margin
+	query.transform = Transform2D(deg_to_rad(rotation), start).scaled(scale)
+	query.motion = end - start
+	return space.intersect_shape(query,max_detections)
+
+
+
+## Why use this raycast when the raycast node is available? Read [method raycast2D]'s description. [br]
+## [param verifier] : Feed [code]self[/code]. To verify that the raycast is used in the 2D world space, also used for internal use. [br] [br]
+## [param start] : The start position of ray cast in global position. [br] [br]
+## [param end] : The end position of ray cast in global position. [br] [br]
+## [param detect_bodies], [param detect_areas] : To declare whether the raycast can detect bodies and areas or not.[br] [br]
+## [param collision_mask] : The collision mask of the raycast to decide which collisionobjects can be detected. [br] [br]
+## [param ignore] : An array of CollisionBodies to ignore while detecting. [br] [br]
+## [param hit_from_inside] : A boolean that decides if the start point is inside a body can it collide from inside it. Does not affect concave polygon shapes. [br] [br]
+## The description for result can be founded in [method PhysicsDirectSpaceState3D.intersect_ray].
+static func raycast3D(
+		verifier: Node3D,
+		start: Vector3,
+		end: Vector3,
+		detect_bodies: bool = true,
+		detect_areas: bool = false,
+		collision_mask: int = 1,
+		ignore: Array[RID] = [],
+		hit_from_inside: bool = false
+		)->Dictionary:
+	if !is_instance_valid(verifier): return {}
+	var space:PhysicsDirectSpaceState3D = verifier.get_world_3d().direct_space_state
+	var query:PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(start,end,collision_mask,ignore)
+	query.collide_with_bodies = detect_bodies
+	query.collide_with_areas = detect_areas
+	query.hit_from_inside = hit_from_inside
+	var result:Dictionary = space.intersect_ray(query)
+	return result
+
+
+
+
+
+## Why use this shapecast when the node is available? Read [method raycast2D] [br] [br]
+## [param verifier] : Feed [code]self[/code]. To verify that the shapecast is used in the 2D world space, also used for internal use. [br] [br]
+## [param shape] : The shape that will be used for the shapecast. For how different shapes may look or way. You can try checking how shapecast node looks on the viewport. [br] [br]
+## [param start] : The start position of shape cast in global position. [br] [br]
+## [param end] : The end position of shape cast in global position. [br] [br]
+## [param max_detections] : Defines the max numbers of colliders it can detect per use. By default its 1, meaning only 1 collider will be detected. Use lower values are more performance. [br] [br]
+## [param detect_bodies], [param detect_areas] : To declare whether the raycast can detect bodies and areas or not.[br] [br]
+## [param collision_mask] : The collision mask of the raycast to decide which collisionobjects can be detected. [br] [br]
+## [param ignore] : An array of CollisionBodies to ignore while detecting. [br] [br]
+## [param rotation], [param scale] : Defines the rotation(in degrees) and scale of the shape. [br] [br]
+## [param safety_margin] : A safety margin used around the border of the shape. Lower value means more precision i.e results will have more accurate values
+## whereas higher values means more consistancy i.e. even if the results values might not be accurate but there are more chances that a detection will be missed which
+## can happen due to many factors like high movement speed, floating point calculation etc. [br] [br]
+## The description for result can be founded in [method PhysicsDirectSpaceState3D.intersect_shape].
+static func shapecast3D(
+		verifier: Node3D,
+		shape:Shape3D,
+		start_transform: Transform3D,
+		end_position: Vector3,
+		max_detections: int = 1,
+		detect_bodies: bool = true,
+		detect_areas: bool = false,
+		collision_mask: int = 1,
+		ignore: Array[RID] = [],
+		safety_margin: float = 0.0,
+		)->Array[Dictionary]:
+	
+	if !is_instance_valid(verifier): return []
+	var space:PhysicsDirectSpaceState3D = verifier.get_world_3d().direct_space_state
+	var query:PhysicsShapeQueryParameters3D = PhysicsShapeQueryParameters3D.new()
+	query.shape = shape
+	query.collide_with_areas = detect_areas
+	query.collide_with_bodies = detect_bodies
+	query.collision_mask = collision_mask
+	query.exclude = ignore
+	query.margin = safety_margin
+	query.transform = start_transform
+	query.motion = end_position - start_transform.origin
+	return space.intersect_shape(query,max_detections)
+
+
+
 
 ## This class can be used to create a bool that alternates every time the function flip is called.
 ## It will alternate between true and false every call. It can be used to create functions related 
@@ -93,6 +281,7 @@ class flip extends RefCounted:
 	func flip()->bool:
 		next = !next
 		return !next
+
 
 ## This function will return true only the first time do_once is called and return false every
 ## other time until reset is called. new(false) can be set to make it start in deactivated state
@@ -280,3 +469,37 @@ class LongPress extends RefCounted:
 			if count == limit:
 				long_press_triggered.emit()
 				can_trigger = false
+
+
+## Why create the delay class when you have the delay function? Well I don't know. I created both because I didn't know which one is more efficient and easy to use.
+## One thing to note these instance based delay is that each instance is unique and you yourself manage them unlike with delay function where you pass in a token to 
+## define the uniqueness of the delay. So handle them yourself. The rest of the definition is the same as [method Utility.Delay] [br][br]
+## Write the delay line as follows otherwise it won't work as intended.[br] 
+## [codeblock]
+## # Creation: 
+## var dd: Utility.DelayC = Utility.DelayC.new(self)
+## # Usage
+## if await dd.Delay(): return 
+## [/codeblock] 
+class DelayC extends RefCounted:
+	var AO: AllowOnce = AllowOnce.new() ## Internal use. Using the Allow once class for defining the active/running state.
+	var timer: SceneTreeTimer ## The active timer that calculating the time_left
+	var ref: Node ## reference of the node. Use for reference the scene tree to create scene tree timers
+	
+	func _init(creator: Node) -> void: ## initialisation. Feed [code]self[/code] to provide a reference to the scene tree.
+		ref = creator
+	
+	## The actual delay function. [br] [br]
+	## [param duration] : The time period for which the delay will exist. [br] [br]
+	## [param reset] : Reset bool defines whether the next call to the same delay will just get ignored while its active or it will reset the timer to the new duration. In both cases the progressive execution will be rejected.
+	func delay(duration: float = 1.0, reset: bool = false):
+		if AO.allow_once():
+			timer = ref.get_tree().create_timer(duration)
+			await timer.timeout
+			AO.reset()
+			timer = null
+			return false
+		elif reset:
+			timer.time_left = duration
+		return true
+		
